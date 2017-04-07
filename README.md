@@ -3,7 +3,6 @@
 
 ### Requirements
 
-* argparse: `pip install argparse`
 * numpy: `pip install numpy`
 * sklearn: `pip install sklearn`
 

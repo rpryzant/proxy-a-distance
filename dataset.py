@@ -4,17 +4,15 @@ import numpy as np
 
 class Dataset(object):
     
-    def __init__(self, source, target, source_vocab, target_vocab, batch_size=64, max_seq_len=30):
-        self.source_vocab_mapping = self.build_vocab_mapping(source_vocab)
-        self.target_vocab_mapping = self.build_vocab_mapping(target_vocab)
+    def __init__(self, source, target, vocab, batch_size=64, max_seq_len=30):
+        self.vocab_map = self.build_vocab_mapping(vocab)
 
-        self.source_vocab_size = len(self.source_vocab_mapping)
-        self.target_vocab_size = len(self.target_vocab_mapping)
+        self.vocab_size = len(self.vocab_map)
 
-        self.source_data = self.prepare_data(source, self.source_vocab_mapping)
-        self.target_data = self.prepare_data(target, self.target_vocab_mapping)
+        self.source_data = self.prepare_data(source)
+        self.target_data = self.prepare_data(target)
 
-        self.train_indices, self.test_indices = self.make_splits(len(self.source_data))
+        self.train_indices, self.val_indices, self.test_indices = self.make_splits(len(self.source_data))
 
         self.batch_index = 0
         self.batch_size = batch_size
@@ -22,19 +20,24 @@ class Dataset(object):
 
     def make_splits(self, N):
         indices = np.arange(N)
-        train = indices[:-N/8]
-        test = indices[-N/8:]
-        return train, test
+        train_test_n = N / 8
+
+        train = indices[:N - (train_test_n * 2)]
+        val = indices[len(train): N - train_test_n]
+        test = indices[len(train) + len(val):]
+
+        return train, val, test
+
 
     def build_vocab_mapping(self, vocabfile):
-        out = {w.strip(): i+1 for (i, w) in enumerate(open(vocabfile))}
+        out = {w.split()[0].strip(): i+1 for (i, w) in enumerate(open(vocabfile))}
         out['<pad>'] = 0
         return out
         
-    def prepare_data(self, corpusfile, vocab_map):
+    def prepare_data(self, corpusfile):
         dataset = []
         for l in open(corpusfile):
-            dataset.append([vocab_map.get(w, vocab_map['<unk>']) for w in l.split()])
+            dataset.append([self.vocab_map.get(w, self.vocab_map['<unk>']) for w in l.split()])
         return dataset
 
     def batch_iter(self, train=True):

@@ -10,9 +10,7 @@ import random
 import time
 
 class DomainClassifier(object):
-    def __init__(self, sess, batch_size, vocab_size, max_seq_len=30, hidden_units=128, num_classes=2, learning_rate=0.003):
-        self.sess = sess
-
+    def __init__(self, batch_size, vocab_size, max_seq_len=30, hidden_units=128, num_classes=2, learning_rate=0.003):
         self.batch_size = batch_size
         self.max_seq_len = max_seq_len
         self.vocab_size = vocab_size
@@ -34,9 +32,10 @@ class DomainClassifier(object):
         logits = self.forward_pass()
         pred = tf.nn.softmax(logits)
         self.loss = self.calc_loss(logits)
-        print self.loss
         self.train_step = self.backward_pass(self.loss)
 
+        self.sess = tf.Session()
+        self.sess.run(tf.global_variables_initializer())
 
     def backward_pass(self, loss):
         optimizer = tf.train.AdamOptimizer(learning_rate=self.lr)
@@ -81,7 +80,16 @@ class DomainClassifier(object):
             shape=[hidden_units, num_classes])
 
 
+    def train_on_batch(self, x, x_lens, y, y_lens, domains):
+        _, loss = self.sess.run([self.train_step, self.loss],
+                                feed_dict={
+                                    self.x: x,
+                                    self.x_lens: x_lens,
+                                    self.y: y,
+                                    self.y_lens: y_lens,
+                                    self.d: domains
+                                    })
+        return loss
 
 if __name__ == '__main__':
-    with tf.Session() as sess:
-        d = DomainClassifier(sess, 5, 30000)
+    d = DomainClassifier(5, 30000)

@@ -1,3 +1,6 @@
+"""
+TODO - documentation, refactor
+"""
 import numpy as np
 import random
 

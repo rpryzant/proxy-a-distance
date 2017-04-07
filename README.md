@@ -1,5 +1,20 @@
 
 
+
+### Requirements
+
+* argparse: `pip install argparse`
+* numpy: `pip install numpy`
+* sklearn: `pip install sklearn`
+
+### Usage
+
+```
+python main.py [corpusfile 1] [corpusfile 2] [vocab file]
+```
+
+
+
 todo
 
 * documentaiotn

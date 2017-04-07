@@ -40,7 +40,11 @@ def main(domain1_source, domain1_target, domain2_source, domain2_target, vocab, 
     model = SVM(batch_size, data_iterator.get_vocab_size())
 
     model.fit(data_iterator)
-    print model.test(data_iterator)
+    print 'INFO: testing...'
+    test_mae = model.test(data_iterator, mae=True)
+    print 'INFO: test MAE: ', test_mae
+
+    print 'INFO: PAD value: ', 2. * (1. - 2. * test_mae)
     # print type(x)
     # print x
     # print list(x)

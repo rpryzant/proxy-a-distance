@@ -31,7 +31,6 @@ class Dataset(object):
     def set_batch_size(self, b):
         self.batch_size = b
 
-
     def get_n(self, data='train'):
         if data == 'train':
             return self.train_n
@@ -43,6 +42,7 @@ class Dataset(object):
 
     def get_vocab_size(self):
         return self.vocab_size
+
 
     def make_splits(self, N):
         indices = np.arange(N)

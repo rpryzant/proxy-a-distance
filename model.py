@@ -10,7 +10,7 @@ import random
 import time
 
 class DomainClassifier(object):
-    def __init__(self, batch_size, vocab_size, max_seq_len=30, hidden_units=128, num_classes=2, learning_rate=0.003):
+    def __init__(self, batch_size, vocab_size, max_seq_len=50, hidden_units=128, learning_rate=0.006):
         self.batch_size = batch_size
         self.max_seq_len = max_seq_len
         self.vocab_size = vocab_size
@@ -21,75 +21,68 @@ class DomainClassifier(object):
         self.x_len = tf.placeholder(tf.int32, [batch_size])
         self.y = tf.placeholder(tf.int32, [batch_size, max_seq_len])
         self.y_len = tf.placeholder(tf.int32, [batch_size])
-        self.d = tf.placeholder(tf.int32, [batch_size, num_classes])
+        self.d = tf.placeholder(tf.int32, [batch_size, 2])
+
         self.E = tf.get_variable(name='E',
                                  initializer=tf.contrib.layers.xavier_initializer(),
                                  shape=[vocab_size, hidden_units])
         self.V = tf.get_variable(name='V',
                                  initializer=tf.contrib.layers.xavier_initializer(),
-                                 shape=[hidden_units*2, num_classes])
+                                 shape=[hidden_units, 2])
 
-        logits = self.forward_pass()
-        pred = tf.nn.softmax(logits)
-        self.loss = self.calc_loss(logits)
-        self.train_step = self.backward_pass(self.loss)
+        input = tf.nn.embedding_lookup(self.E, self.x)
+        input = tf.reshape(input, [batch_size, -1])
+        with tf.variable_scope('fc1'):
+            fc1 = self.fc(input, self.max_seq_len * self.hidden_units, 1024)
+        with tf.variable_scope('fc2'):
+            fc2 = self.fc(fc1, 1024, 2)
+        self.logits = fc2
+        
+#        outputs = input[:, 0, :]
+#        print outputs
+#        cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=hidden_units)
+#        input = tf.transpose(input, [1,0,2])
+#        outputs, state = tf.nn.dynamic_rnn(cell=cell,
+#                                           inputs=input,
+#                                           sequence_length=self.x_len,
+#                                           dtype=tf.float32,
+#                                           time_major=True)
+#        outputs = outputs[-1]
+ 
+ #       self.logits = tf.squeeze(tf.matmul(outputs, self.V))
+        self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.d))
+
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        self.train_step = optimizer.minimize(self.loss)
 
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
 
-    def backward_pass(self, loss):
-        optimizer = tf.train.AdamOptimizer(learning_rate=self.lr)
-        train_step = optimizer.minimize(loss)
-        return train_step
 
-
-    def calc_loss(self, logits):
-        losses = tf.nn.softmax_cross_entropy_with_logits(logits, self.d)
-        loss_per_batch = tf.reduce_sum(losses) / tf.to_float(self.batch_size)
-        mean_loss = tf.reduce_mean(loss_per_batch)
-        return mean_loss
-        
-    def forward_pass(self):
-        with tf.variable_scope('d1'):
-            d1_outs, d1_final_state = self.encode(self.x, self.x_len)
-        with tf.variable_scope('d2'):
-            d2_outs, d2_final_state = self.encode(self.y, self.y_len)
-
-        d1_final = d1_outs[:,-1,:]
-        d2_final = d2_outs[:,-1,:]
-        final_out = tf.concat(1, [d1_final, d2_final])
-
-        logits = tf.matmul(final_out, self.V)
-
-        return logits
-
-
-    def encode(self, inputs, lengths, num_classes=2, keep_prob=0.5):
-        input_embeddings = tf.nn.embedding_lookup(self.E, inputs)
-        cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=self.hidden_units)
-        outputs, state = tf.nn.dynamic_rnn(cell=cell,
-                                           inputs=input_embeddings,
-                                           sequence_length=lengths,
-                                           dtype=tf.float32)
-        return outputs, state
-
-        # output layer
-        V = tf.get_variable(
-            name='V',
-            initializer=tf.random_normal_initializer(),
-            shape=[hidden_units, num_classes])
+    def fc(self, input, in_dim, out_dim):
+        W = tf.get_variable(name='W1',
+                             initializer=tf.contrib.layers.xavier_initializer(),
+                             shape=[in_dim, out_dim])
+        b = tf.get_variable(name='b',
+                             initializer=tf.contrib.layers.xavier_initializer(),
+                             shape=[out_dim])
+        return tf.matmul(input, W) + b
 
 
     def train_on_batch(self, domains, x, x_lens, y, y_lens):
-        _, loss = self.sess.run([self.train_step, self.loss],
+        _, loss, preds = self.sess.run([self.train_step, self.loss, self.logits],
                                 feed_dict={
                                     self.x: x,
-                                    self.x_lens: x_lens,
+                                    self.x_len: x_lens,
                                     self.y: y,
-                                    self.y_lens: y_lens,
+                                    self.y_len: y_lens,
                                     self.d: domains
                                     })
-        return loss
+
+        print [np.argmax(x) for x in domains]
+        print [np.argmax(x) for x in preds]
+        print loss
+        return loss, preds
 
 if __name__ == '__main__':
     d = DomainClassifier(5, 30000)

@@ -56,11 +56,12 @@ class Dataset(object):
             for i in range(self.batch_size):
                 if random.random() < 0.5:
                     x, x_l, y, y_l = self.get_example(self.d1_source_data, self.d1_target_data, i)
-                    out_batch[0].append(0)
+                    domain = [1, 0]
                 else:
                     x, x_l, y, y_l = self.get_example(self.d2_source_data, self.d2_target_data, i)
-                    out_batch[0].append(1)
+                    domain = [0, 1]
 
+                out_batch[0].append(domain)
                 out_batch[1].append(x)
                 out_batch[2].append(x_l)
                 out_batch[3].append(y)

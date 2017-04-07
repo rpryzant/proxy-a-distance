@@ -8,6 +8,7 @@ import argparse # option parsing
 from dataset import Dataset
 from model import DomainClassifier
 import random
+import numpy as np
 
 def process_command_line():
   """
@@ -37,9 +38,12 @@ def main(domain1_source, domain1_target, domain2_source, domain2_target, vocab, 
     data_iterator = Dataset(domain1_source, domain1_target, domain2_source, domain2_target, vocab, batch_size=batch_size)
     model = DomainClassifier(batch_size, data_iterator.get_vocab_size())
 
-    for batch in data_iterator.mixed_batch_iter():
-      print batch
-      quit()
+    while True:
+      for batch in data_iterator.mixed_batch_iter():
+          b = batch
+          l, preds = model.train_on_batch(*b)
+
+
 
 
 

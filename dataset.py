@@ -7,8 +7,6 @@ class Dataset(object):
     def __init__(self, d1_source, d1_target, d2_source, d2_target, vocab, batch_size=64, max_seq_len=50):
         self.vocab_map = self.build_vocab_mapping(vocab)
 
-        self.vocab_size = len(self.vocab_map)
-
         self.d1_source_data = self.prepare_data(d1_source)
         self.d1_target_data = self.prepare_data(d1_target)
 
@@ -17,9 +15,27 @@ class Dataset(object):
 
         self.train_indices, self.val_indices, self.test_indices = self.make_splits(len(self.d1_source_data))
 
+        self.vocab_size = len(self.vocab_map)
+        self.train_n = len(self.train_indices)
+        self.val_n = len(self.val_indices)
+        self.test_n = len(self.test_indices)
+
         self.batch_index = 0
         self.batch_size = batch_size
         self.max_seq_len = max_seq_len
+
+
+    def set_batch_size(self, b):
+        self.batch_size = b
+
+
+    def get_n(self, data='train'):
+        if data == 'train':
+            return self.train_n
+        elif data == 'val':
+            return self.val_n
+        elif data == 'test':
+            return self.test_n
 
 
     def get_vocab_size(self):
@@ -49,16 +65,24 @@ class Dataset(object):
         return dataset
 
 
-    def mixed_batch_iter(self, train=True):
-        indices = self.train_indices if train else self.test_indices
+    def mixed_batch_iter(self, data='train'):
+        if data == 'train':
+            indices = self.train_indices
+        elif data == 'val':
+            indices = self.val_indices
+        elif data == 'test':
+            indices = self.test_indices
+
         while self.has_next_batch(indices):
             out_batch = ([], [], [], [], [])
             for i in range(self.batch_size):
+                j = indices[self.batch_index + i]
+
                 if random.random() < 0.5:
-                    x, x_l, y, y_l = self.get_example(self.d1_source_data, self.d1_target_data, i)
+                    x, x_l, y, y_l = self.get_example(self.d1_source_data, self.d1_target_data, j)
                     domain = [1, 0]
                 else:
-                    x, x_l, y, y_l = self.get_example(self.d2_source_data, self.d2_target_data, i)
+                    x, x_l, y, y_l = self.get_example(self.d2_source_data, self.d2_target_data, j)
                     domain = [0, 1]
 
                 out_batch[0].append(domain)
@@ -73,16 +97,6 @@ class Dataset(object):
         self.batch_index = 0
             
 
-    def batch_iter(self, train=True):
-        indices = self.train_indices if train else self.test_indices
-
-        while self.has_next_batch(indices):
-            d1_batch = self.get_batch(indices, self.d1_source_data, self.d1_target_data)
-            d2_batch = self.get_batch(indices, self.d2_source_data, self.d2_target_data)
-            self.batch_index += self.batch_size
-
-        self.batch_index = 0
-
 
     def has_next_batch(self, indices):
         return self.batch_index + self.batch_size < len(indices)
@@ -94,11 +108,11 @@ class Dataset(object):
             new[:len(x)] = x
             return new[:self.max_seq_len]
 
-        x = source[self.batch_index + i]
+        x = source[i]
         x = post_pad(x)
         x_l = np.count_nonzero(x)
 
-        y = target[self.batch_index + i]
+        y = target[i]
         y = post_pad(y)
         y_l = np.count_nonzero(y)
 
@@ -106,32 +120,6 @@ class Dataset(object):
 
 
 
-    def batch_iter(self, train=True):
-        indices = self.train_indices if train else self.test_indices
-
-        while self.has_next_batch(indices):
-            d1_batch = self.get_batch(indices, self.d1_source_data, self.d1_target_data)
-            d2_batch = self.get_batch(indices, self.d2_source_data, self.d2_target_data)
-            self.batch_index += self.batch_size
-
-        self.batch_index = 0
-
-
-    def get_batch(self, indices, source_data, target_data):
-        def post_pad(x, pad=0):
-            new =  [pad] * self.max_seq_len
-            new[:len(x)] = x
-            return new[:self.max_seq_len]
-
-        x_batch = source_data[self.batch_index : self.batch_index + self.batch_size]
-        x_batch = [post_pad(x) for x in x_batch]
-        x_lens = np.count_nonzero(np.array(x_batch), axis=1).tolist()
-
-        y_batch = target_data[self.batch_index : self.batch_index + self.batch_size]
-        y_batch = [post_pad(y) for y in y_batch]
-        y_lens = np.count_nonzero(np.array(y_batch), axis=1).tolist()
-        
-        return x_batch, x_lens, y_batch, y_lens
 
 if __name__ == '__main__':
     pass

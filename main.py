@@ -6,7 +6,7 @@ python main.py test_data/dev.europarl.bpe.en test_data/dev.europarl.bpe.fr test_
 
 import argparse # option parsing
 from dataset import Dataset
-from model import DomainClassifier
+from models import NN, SVM
 import random
 import numpy as np
 
@@ -36,12 +36,26 @@ def process_command_line():
 
 def main(domain1_source, domain1_target, domain2_source, domain2_target, vocab, batch_size):
     data_iterator = Dataset(domain1_source, domain1_target, domain2_source, domain2_target, vocab, batch_size=batch_size)
-    model = DomainClassifier(batch_size, data_iterator.get_vocab_size())
+#    model = NN(batch_size, data_iterator.get_vocab_size())
+    model = SVM(batch_size, data_iterator.get_vocab_size())
 
-    while True:
-      for batch in data_iterator.mixed_batch_iter():
-          b = batch
-          l, preds = model.train_on_batch(*b)
+    model.fit(data_iterator)
+    print model.test(data_iterator)
+    # print type(x)
+    # print x
+    # print list(x)
+
+    # data_iterator.batch_size = data_iterator.train_n
+    # print data_iterator.batch_size
+    # quit()
+    # while True:
+    #   for batch in data_iterator.mixed_batch_iter():
+    #       b = batch
+    #       model.train_on_batch(*batch)
+    #       print [np.argmax(x) for x in batch[0]]
+    #       print model.predict(*batch[1:])
+
+#          l, preds = model.train_on_batch(*b)
 
 
 

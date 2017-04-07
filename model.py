@@ -1,5 +1,5 @@
 """
-
+TODO - documentation, refactor
 
 """
 import numpy as np
@@ -37,19 +37,7 @@ class DomainClassifier(object):
         with tf.variable_scope('fc2'):
             fc2 = self.fc(fc1, 1024, 2)
         self.logits = fc2
-        
-#        outputs = input[:, 0, :]
-#        print outputs
-#        cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=hidden_units)
-#        input = tf.transpose(input, [1,0,2])
-#        outputs, state = tf.nn.dynamic_rnn(cell=cell,
-#                                           inputs=input,
-#                                           sequence_length=self.x_len,
-#                                           dtype=tf.float32,
-#                                           time_major=True)
-#        outputs = outputs[-1]
- 
- #       self.logits = tf.squeeze(tf.matmul(outputs, self.V))
+
         self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.d))
 
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)

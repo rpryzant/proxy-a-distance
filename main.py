@@ -1,13 +1,13 @@
 """
-python main.py data/europarl_opensubtitles_processed/test.combined.bpe.en data/europarl_opensubtitles_processed/test.combined.bpe.fr data/europarl_opensubtitles_processed/bpe.vocab
+python main.py test_data/dev.europarl.bpe.en test_data/dev.europarl.bpe.fr test_data/dev.opensubtitles.bpe.en test_data/dev.opensubtitles.bpe.fr test_data/bpe.vocab
 
 """
 
 
 import argparse # option parsing
 from dataset import Dataset
-
-
+from model import DomainClassifier
+import random
 
 def process_command_line():
   """
@@ -17,15 +17,29 @@ def process_command_line():
 
   parser = argparse.ArgumentParser(description='usage') # add description
   # positional arguments
-  parser.add_argument('d1', metavar='domain-1', type=str, help='domain 1 corpus')
-  parser.add_argument('d2', metavar='domain-2', type=str, help='domain 2 corpus')
+  parser.add_argument('d1s', metavar='domain1-source', type=str, help='domain 1 source')
+  parser.add_argument('d1t', metavar='domain1-target', type=str, help='domain 1 target')
+
+  parser.add_argument('d2s', metavar='domain2-source', type=str, help='domain 2 source')
+  parser.add_argument('d2t', metavar='domain2-target', type=str, help='domain 2 target')
+
   parser.add_argument('v', metavar='vocab', type=str, help='shared bpe vocab')
+
+  # optional arguments
+  parser.add_argument('-b', '--batch-size', dest='b', type=int, default=32, help='batch_size')
 
   args = parser.parse_args()
   return args
 
-def main(domain1, domain2, vocab):
-    d = Dataset(domain1, domain2, vocab)
+
+
+def main(domain1_source, domain1_target, domain2_source, domain2_target, vocab, batch_size):
+    data_iterator = Dataset(domain1_source, domain1_target, domain2_source, domain2_target, vocab, batch_size=batch_size)
+    model = DomainClassifier(batch_size, data_iterator.get_vocab_size())
+
+    for batch in data_iterator.mixed_batch_iter():
+      print batch
+      quit()
 
 
 
@@ -33,4 +47,4 @@ def main(domain1, domain2, vocab):
 if __name__ == '__main__':
     args = process_command_line()
 
-    main(args.d1, args.d2, args.v)
+    main(args.d1s, args.d1t, args.d2s, args.d2t, args.v, args.b)

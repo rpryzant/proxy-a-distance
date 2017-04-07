@@ -80,7 +80,7 @@ class DomainClassifier(object):
             shape=[hidden_units, num_classes])
 
 
-    def train_on_batch(self, x, x_lens, y, y_lens, domains):
+    def train_on_batch(self, domains, x, x_lens, y, y_lens):
         _, loss = self.sess.run([self.train_step, self.loss],
                                 feed_dict={
                                     self.x: x,

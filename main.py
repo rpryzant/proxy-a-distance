@@ -4,8 +4,8 @@ Main driver code
 
 
 import argparse # option parsing
-from dataset import Dataset
-from models import SVM
+from src.dataset import Dataset
+from src.model import SVM
 import random
 import numpy as np
 

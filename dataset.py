@@ -1,5 +1,5 @@
 """
-TODO - documentation, refactor
+Utility class for managing datasets
 """
 import numpy as np
 import random
@@ -8,7 +8,8 @@ import random
 class Dataset(object):
     
     def __init__(self, d1_source, d1_target, d2_source, d2_target, vocab, batch_size=64, max_seq_len=50):
-        self.vocab_map = self.build_vocab_mapping(vocab)
+        #   {word : id} mapping
+        self.vocab_map = self.build_vocab_mapping(vocab) 
 
         self.d1_source_data = self.prepare_data(d1_source)
         self.d1_target_data = self.prepare_data(d1_target)
@@ -29,9 +30,13 @@ class Dataset(object):
 
 
     def set_batch_size(self, b):
+        """ Set batch size for batch iteration
+        """
         self.batch_size = b
 
     def get_n(self, data='train'):
+        """ Get number of examples for some split
+        """
         if data == 'train':
             return self.train_n
         elif data == 'val':
@@ -41,10 +46,14 @@ class Dataset(object):
 
 
     def get_vocab_size(self):
+        """ Get number of tokens in vocabulary
+        """
         return self.vocab_size
 
 
     def make_splits(self, N):
+        """ Generate train/val/test splits. Train is 7/8 of the data, val/test are each 1/16.
+        """
         indices = np.arange(N)
         train_test_n = N / 8
 
@@ -55,20 +64,31 @@ class Dataset(object):
         return train, val, test
 
 
-    def build_vocab_mapping(self, vocabfile):
-        out = {w.split()[0].strip(): i+1 for (i, w) in enumerate(open(vocabfile))}
+    def build_vocab_mapping(self, vocab):
+        """ Given a 1-token-per-line vocab file, generate {word : index} mapping.
+            Note that the <pad> token is appended to the vocabulary.
+        """
+        out = {w.split()[0].strip(): i+1 for (i, w) in enumerate(open(vocab))}
         out['<pad>'] = 0
         return out
 
         
-    def prepare_data(self, corpusfile):
+    def prepare_data(self, corpus):
+        """ Translate tokens in a 1-sequence-per-line corpus file into
+            their mapped indexes, and return a 2d array representation
+        """
         dataset = []
-        for l in open(corpusfile):
+        for l in open(corpus):
             dataset.append([self.vocab_map.get(w, self.vocab_map['<unk>']) for w in l.split()])
         return dataset
 
 
     def mixed_batch_iter(self, data='train'):
+        """ Yields mixed batches of data from both datasets
+
+            A batch is
+              ([x in corpus 1], [len(x)], [y in corpus 2], [len(y)])
+        """
         if data == 'train':
             indices = self.train_indices
         elif data == 'val':
@@ -80,7 +100,7 @@ class Dataset(object):
             out_batch = ([], [], [], [], [])
             for i in range(self.batch_size):
                 j = indices[self.batch_index + i]
-
+                # mixing probability = 0.5
                 if random.random() < 0.5:
                     x, x_l, y, y_l = self.get_example(self.d1_source_data, self.d1_target_data, j)
                     domain = [1, 0]
@@ -100,12 +120,15 @@ class Dataset(object):
         self.batch_index = 0
             
 
-
     def has_next_batch(self, indices):
+        """ tests whether another batch can be expelled
+        """
         return self.batch_index + self.batch_size < len(indices)
 
 
     def get_example(self, source, target, i):
+        """ Generates a single pair of padded examples from the data
+        """
         def post_pad(x, pad=0):
             new =  [pad] * self.max_seq_len
             new[:len(x)] = x

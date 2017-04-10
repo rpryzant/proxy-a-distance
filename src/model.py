@@ -51,7 +51,7 @@ class SVM(object):
     def train_on_batch(self, domains, x, x_lens, y, y_lens, c=3000):
         """ Train svm on some data
         """
-        self.model = svm.SVC(C=c, probability=True)
+        self.model = svm.SVC(C=c, probability=True, verbose=2)
         examples = self.prepare_examples(x, x_lens, y, y_lens)
         labels = self.prepare_labels(domains)
         self.model.fit(examples, labels)

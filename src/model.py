@@ -26,7 +26,10 @@ class SVM(object):
         for x in sequence:
             if x == 0:
                 break
-            out[x] = 1
+            try:
+                out[x] += 1
+            except:
+                pass
         return out
 
 

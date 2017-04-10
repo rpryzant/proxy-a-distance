@@ -100,6 +100,9 @@ class Dataset(object):
             out_batch = ([], [], [], [], [])
             for i in range(self.batch_size):
                 j = indices[self.batch_index + i]
+                if j >= min(len(self.d1_source_data), len(self.d1_target_data),
+                            len(self.d2_source_data), len(self.d2_target_data)):
+                    break
                 # mixing probability = 0.5
                 if random.random() < 0.5:
                     x, x_l, y, y_l = self.get_example(self.d1_source_data, self.d1_target_data, j)

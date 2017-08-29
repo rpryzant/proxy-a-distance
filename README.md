@@ -29,7 +29,6 @@ python main.py [corpusfile 1] [corpusfile 2] [vocab file]
 * `corpusfile 2` is another text file with one sentence per line.
 * `vocab` is a text file with one token per line. These tokens represent a shared vocabulary for the above corpusfiles.
 
-
 ## Example
 
 ```

@@ -3,7 +3,8 @@
 
 This is an implementation of an algorithm discussed in [Ganin et. al (2015)](https://arxiv.org/abs/1505.07818), [Glorot et. al (2011)](http://www.icml-2011.org/papers/342_icmlpaper.pdf), and [Ben-David et. al (2007)](https://papers.nips.cc/paper/2983-analysis-of-representations-for-domain-adaptation). It has been adapted for use with machine translation datasets, and released to the public under the MIT license. 
 
-This algorithm computes the Proxy A-Distance (PAD) between two domain distributions. PAD is a measure of similarity between datasets from different domains (e.g. newspapers and talk shows). The lower the PAD, the closer two datasets are. 
+This algorithm computes the Proxy A-Distance (PAD) between two domain distributions. PAD is a measure of similarity between datasets from different domains (e.g. newspapers and talk shows). Intuitively, similar domains => smaller error => bigger PAD. Dissimilar domains => bigger error => smaller PAD.
+
 
 The algorithm is as follows:
 
